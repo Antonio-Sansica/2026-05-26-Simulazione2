@@ -6,24 +6,24 @@ class DAO():
     def __init__(self):
         pass
 
+
     @staticmethod
-    def get_all_ratings():
+    def getAllRatings():
         cnx = DBConnect.get_connection()
         result = []
         if cnx is None: return result
         try:
-
             cursor = cnx.cursor(dictionary=True)
 
             query = """
-            SELECT DISTINCT r.avg_rating AS rating
-            FROM ratings r 
-            ORDER BY r.avg_rating ASC   
-            """
+                SELECT distinct r.avg_rating 
+                from ratings r 
+                order by r.avg_rating 
+                """
             cursor.execute(query)
 
             for row in cursor:
-                result.append(row['rating'])
+                result.append(row['avg_rating'])
 
             return result
         except Exception as e:
@@ -34,69 +34,66 @@ class DAO():
             cnx.close()
 
     @staticmethod
-    def get_id_nodi_validi(rate1, rate2):
+    def getAllNodi(rate1, rate2):
         cnx = DBConnect.get_connection()
         result = []
-        if cnx is None: return []
+        if cnx is None: return result
         try:
             cursor = cnx.cursor(dictionary=True)
 
             query = """
-                    SELECT DISTINCT n.*
-                    FROM names n 
-                    JOIN role_mapping rm ON n.id = rm.name_id 
-                    JOIN ratings r ON rm.movie_id = r.movie_id
-                    WHERE r.avg_rating BETWEEN %s AND %s 
-                      AND n.date_of_birth IS NOT NULL
-                      AND (rm.category = 'actor' OR rm.category = 'actress')
-                    """
+                 SELECT distinct n.*
+                 from names n 
+                 join role_mapping rm on n.id = rm.name_id 
+                 join ratings r on rm.movie_id = r.movie_id
+                 where r.avg_rating BETWEEN %s and %s and n.date_of_birth is not NULL 
+                """
             cursor.execute(query, (rate1, rate2))
 
             for row in cursor:
-                result.append(Attore(**row))
+                attore = Attore(**row)
+                result.append(attore)
 
-            print(f"Nodi estratti dal DB: {len(result)}")
             return result
-
         except Exception as e:
-            print(f"Errore DAO ID Nodi Grafo: {e}")
+            print(f"Errore DAO estrazione base: {e}")
             return []
         finally:
             cursor.close()
             cnx.close()
 
     @staticmethod
-    def get_archi_grafo_pesato():
-        print("Inizio estrazione archi dal DB...")
+    def getAllMovies(rate1, rate2):
         cnx = DBConnect.get_connection()
         result = []
-        if cnx is None: return []
+        if cnx is None: return result
         try:
             cursor = cnx.cursor(dictionary=True)
 
-            # Query ottimizzata: unisce la tabella role_mapping con se stessa (su stesso film)
-            # e filtra direttamente per attori, senza parametri extra!
             query = """
-                    SELECT rm1.name_id AS id_1, rm2.name_id AS id_2, m.id AS idFilm, m.worlwide_gross_income AS pesoParziale
-                    FROM role_mapping rm1
-                    JOIN role_mapping rm2 ON rm1.movie_id = rm2.movie_id
-                    JOIN movie m ON rm1.movie_id = m.id
-                    WHERE rm1.name_id < rm2.name_id
-                      AND (rm1.category = 'actor' OR rm1.category = 'actress')
-                      AND (rm2.category = 'actor' OR rm2.category = 'actress')
+                     SELECT rm.name_id as ida, rm.movie_id as idm, m.worlwide_gross_income as incasso
+                     from role_mapping rm 
+                     join ratings r on rm.movie_id = r.movie_id 
+                     join movie m on r.movie_id = m.id 
+                     where r.avg_rating BETWEEN %s and %s and m.worlwide_gross_income like '$%' and m.worlwide_gross_income is not null 
                     """
-
-            cursor.execute(query)
+            cursor.execute(query, (rate1, rate2))
 
             for row in cursor:
-                result.append((row['id_1'], row['id_2'], row['idFilm'], row['pesoParziale']))
+                result.append((row['ida'], row['idm'], row['incasso']))
 
-            print(f"Archi estratti dal DB: {len(result)}")
             return result
-
         except Exception as e:
-            print(f"Errore DAO estrazione archi: {e}")
+            print(f"Errore DAO estrazione base: {e}")
             return []
         finally:
             cursor.close()
             cnx.close()
+
+
+
+
+
+
+
+
