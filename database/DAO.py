@@ -16,9 +16,9 @@ class DAO():
             cursor = cnx.cursor(dictionary=True)
 
             query = """
-                SELECT distinct r.avg_rating 
-                from ratings r 
-                order by r.avg_rating 
+            SELECT distinct r.avg_rating 
+            from ratings r 
+            order by r.avg_rating
                 """
             cursor.execute(query)
 
@@ -42,13 +42,13 @@ class DAO():
             cursor = cnx.cursor(dictionary=True)
 
             query = """
-                 SELECT distinct n.*
-                 from names n 
-                 join role_mapping rm on n.id = rm.name_id 
-                 join ratings r on rm.movie_id = r.movie_id
-                 where r.avg_rating BETWEEN %s and %s and n.date_of_birth is not NULL 
-                """
-            cursor.execute(query, (rate1, rate2))
+                SELECT distinct n.*
+                from names n 
+                join role_mapping rm on n.id = rm.name_id 
+                join ratings r on rm.movie_id = r.movie_id 
+                where r.avg_rating between %s and %s and n.date_of_birth is not null
+                    """
+            cursor.execute(query,(rate1, rate2))
 
             for row in cursor:
                 attore = Attore(**row)
@@ -71,16 +71,16 @@ class DAO():
             cursor = cnx.cursor(dictionary=True)
 
             query = """
-                     SELECT rm.name_id as ida, rm.movie_id as idm, m.worlwide_gross_income as incasso
-                     from role_mapping rm 
-                     join ratings r on rm.movie_id = r.movie_id 
-                     join movie m on r.movie_id = m.id 
-                     where r.avg_rating BETWEEN %s and %s and m.worlwide_gross_income like '$%' and m.worlwide_gross_income is not null 
-                    """
+                    SELECT distinct rm.movie_id, rm.name_id 
+                    from role_mapping rm 
+                    join ratings r on rm.movie_id = r.movie_id 
+                    join movie m on rm.movie_id = m.id 
+                    where r.avg_rating between %s and %s and m.worlwide_gross_income is not null and m.worlwide_gross_income like('$%')
+                        """
             cursor.execute(query, (rate1, rate2))
 
             for row in cursor:
-                result.append((row['ida'], row['idm'], row['incasso']))
+                result.append((row['movie_id'], row['name_id']))
 
             return result
         except Exception as e:
@@ -90,10 +90,32 @@ class DAO():
             cursor.close()
             cnx.close()
 
+    @staticmethod
+    def getAllIncassi(rate1, rate2):
+        cnx = DBConnect.get_connection()
+        result = []
+        if cnx is None: return result
+        try:
+            cursor = cnx.cursor(dictionary=True)
 
+            query = """
+            SELECT distinct m.id, m.worlwide_gross_income 
+            from movie m 
+            JOIN ratings r ON m.id = r.movie_id 
+            where m.worlwide_gross_income LIKE ('$%') AND m.worlwide_gross_income IS NOT NULL and r.avg_rating between %s and %s
+                            """
+            cursor.execute(query, (rate1, rate2))
 
+            for row in cursor:
+                result.append((row['id'], row['worlwide_gross_income']))
 
-
+            return result
+        except Exception as e:
+            print(f"Errore DAO estrazione base: {e}")
+            return []
+        finally:
+            cursor.close()
+            cnx.close()
 
 
 

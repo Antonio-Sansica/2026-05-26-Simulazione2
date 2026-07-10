@@ -15,8 +15,8 @@ class Attore:
     def __str__(self):
         return f"[{self.id}] {self.name}"
 
-    def __eq__(self, other):
 
+    def __eq__(self, other):
         if isinstance(other, Attore):
             return self.id == other.id
         return False
@@ -27,13 +27,11 @@ class Attore:
 
     @property
     def eta(self):
-
         oggi = date.today()
 
         anno_nascita = self.date_of_birth.year
         mese_nascita = self.date_of_birth.month
         giorno_nascita = self.date_of_birth.day
-
 
         eta_calcolata = oggi.year - anno_nascita
 
