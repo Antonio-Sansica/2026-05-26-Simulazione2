@@ -16,9 +16,9 @@ class DAO():
             cursor = cnx.cursor(dictionary=True)
 
             query = """
-            SELECT distinct r.avg_rating 
+            SELECT DISTINCT r.avg_rating 
             from ratings r 
-            order by r.avg_rating
+            order by r.avg_rating 
                 """
             cursor.execute(query)
 
@@ -34,7 +34,7 @@ class DAO():
             cnx.close()
 
     @staticmethod
-    def getAllNodi(rate1, rate2):
+    def getAllNodi(r1, r2):
         cnx = DBConnect.get_connection()
         result = []
         if cnx is None: return result
@@ -42,13 +42,13 @@ class DAO():
             cursor = cnx.cursor(dictionary=True)
 
             query = """
-                SELECT distinct n.*
-                from names n 
-                join role_mapping rm on n.id = rm.name_id 
-                join ratings r on rm.movie_id = r.movie_id 
-                where r.avg_rating between %s and %s and n.date_of_birth is not null
+            SELECT DISTINCT n.*
+            from role_mapping rm  
+            join ratings r on rm.movie_id  = r.movie_id 
+            join names n on rm.name_id = n.id 
+            where r.avg_rating between %s and %s and n.date_of_birth is not NULL
                     """
-            cursor.execute(query,(rate1, rate2))
+            cursor.execute(query,(r1, r2))
 
             for row in cursor:
                 attore = Attore(**row)
@@ -63,7 +63,7 @@ class DAO():
             cnx.close()
 
     @staticmethod
-    def getAllMovies(rate1, rate2):
+    def getAllMovies(r1, r2):
         cnx = DBConnect.get_connection()
         result = []
         if cnx is None: return result
@@ -71,16 +71,16 @@ class DAO():
             cursor = cnx.cursor(dictionary=True)
 
             query = """
-                    SELECT distinct rm.movie_id, rm.name_id 
-                    from role_mapping rm 
-                    join ratings r on rm.movie_id = r.movie_id 
-                    join movie m on rm.movie_id = m.id 
-                    where r.avg_rating between %s and %s and m.worlwide_gross_income is not null and m.worlwide_gross_income like('$%')
-                        """
-            cursor.execute(query, (rate1, rate2))
+            SELECT distinct rm.name_id, rm.movie_id 
+            from role_mapping rm 
+            join movie m on rm.movie_id = m.id 
+            join ratings r on rm.movie_id = r.movie_id 
+            where m.worlwide_gross_income is not null and m.worlwide_gross_income LIKE ('$%') and r.avg_rating between %s and %s
+                """
+            cursor.execute(query, (r1, r2))
 
             for row in cursor:
-                result.append((row['movie_id'], row['name_id']))
+                result.append((row['name_id'], row['movie_id']))
 
             return result
         except Exception as e:
@@ -91,7 +91,7 @@ class DAO():
             cnx.close()
 
     @staticmethod
-    def getAllIncassi(rate1, rate2):
+    def getAllIncassi():
         cnx = DBConnect.get_connection()
         result = []
         if cnx is None: return result
@@ -99,15 +99,14 @@ class DAO():
             cursor = cnx.cursor(dictionary=True)
 
             query = """
-            SELECT distinct m.id, m.worlwide_gross_income 
+            SELECT m.id, m.worlwide_gross_income as incasso
             from movie m 
-            JOIN ratings r ON m.id = r.movie_id 
-            where m.worlwide_gross_income LIKE ('$%') AND m.worlwide_gross_income IS NOT NULL and r.avg_rating between %s and %s
-                            """
-            cursor.execute(query, (rate1, rate2))
+            where m.worlwide_gross_income is not null and m.worlwide_gross_income LIKE ('$%')
+                    """
+            cursor.execute(query)
 
             for row in cursor:
-                result.append((row['id'], row['worlwide_gross_income']))
+                result.append((row['id'], row['incasso']))
 
             return result
         except Exception as e:
@@ -116,6 +115,4 @@ class DAO():
         finally:
             cursor.close()
             cnx.close()
-
-
 

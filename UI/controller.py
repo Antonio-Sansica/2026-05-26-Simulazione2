@@ -31,9 +31,10 @@ class Controller:
             self._view.create_alert("Attenzione: Seleziona un range valido!")
             return
 
-        if valore_str1 > valore_str2 is None:
+        if parametro_utente1 > parametro_utente2:
             self._view.create_alert("Attenzione: Seleziona un range valido!")
             return
+
 
         self._model.build_graph(parametro_utente1, parametro_utente2)
 
@@ -45,19 +46,19 @@ class Controller:
             return
 
         nodi, archi = self._model.get_dettagli_grafo()
-        self._view.txt_result.controls.append(ft.Text(f"Grafo creato con successo!"))
+        self._view.txt_result.controls.append(ft.Text(f"Grafo creato con successo!", color="green"))
         self._view.txt_result.controls.append(ft.Text(f"Numero Nodi: {nodi}"))
         self._view.txt_result.controls.append(ft.Text(f"Numero Archi: {archi}"))
 
-        self._view.txt_result.controls.append(ft.Text("Top 5 archi di peso maggiore:"))
+        self._view.txt_result.controls.append(ft.Text("5 Archi di peso maggiore:", color="red"))
         top_archi = self._model.get_top_archi_peso(5)
         for u, v, dati in top_archi:
             self._view.txt_result.controls.append(ft.Text(f"{u.name} -> {v.name} ({dati['weight']})"))
 
         num_comp, comp_maggiore = self._model.get_componente_connessa_maggiore()
-        self._view.txt_result.controls.append(ft.Text(f"Il grafo ha {num_comp} componenti connesse"))
+        self._view.txt_result.controls.append(ft.Text(f"Il grafo ha {num_comp} componenti connesse", color="red"))
         self._view.txt_result.controls.append(
-            ft.Text(f"La componente connessa più grande è lunga{len(comp_maggiore)}:"))
+            ft.Text(f"Componente più grande ({len(comp_maggiore)} nodi):", color="red"))
 
         for nodo in comp_maggiore:
             self._view.txt_result.controls.append(ft.Text(f"{nodo.name}"))
@@ -65,8 +66,12 @@ class Controller:
 
     def handleCammino(self, e):
         self._view.txt_result.controls.clear()
-        cammino, punteggio = self._model.calcola_percorso_lungo_con_vincolo_nodi()
-        self._view.txt_result.controls.append(ft.Text(f"Trovato un cammino lungo {punteggio}:"))
-        for nodo in cammino:
-            self._view.txt_result.controls.append(ft.Text(f"{nodo.name} Età: {nodo.eta}"))
+
+        percorso_nodi, lunghezza = self._model.calcola_percorso_lungo_con_vincolo_nodi()
+        self._view.txt_result.controls.append(
+            ft.Text(f"Trovato percorso lungo {lunghezza} attori:", color="red", weight="bold")
+        )
+        for nodo in percorso_nodi:
+            self._view.txt_result.controls.append(ft.Text(f"- {nodo.name} (DOB: {nodo.date_of_birth})"))
+
         self._view.update_page()
